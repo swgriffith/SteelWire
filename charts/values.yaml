@@ -1,0 +1,31 @@
+replicas: 1
+
+image:
+  repository: stevegriffith/vsts-buildagent
+  tag: latest
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: .25
+    memory: 1Gi
+  requests:
+    cpu: .25
+    memory: 1Gi
+  disk: "5Gi"
+  storageclass: "default"
+
+cleanRun: false
+
+volumeMounts:
+- name: docker-socket
+  mountPath: /var/run/docker.sock
+  readOnly: false
+
+volumes:
+- name: docker-socket
+  hostPath:
+    path: /var/run/docker.sock
+
+extraEnv: {}
+

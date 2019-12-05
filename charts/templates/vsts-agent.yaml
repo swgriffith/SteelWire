@@ -1,0 +1,79 @@
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    chart: {{ .Chart.Name }}
+    version: {{ .Chart.Version }}
+spec:
+  replicas: {{ .Values.replicas }}
+  serviceName: {{ .Chart.Name }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+          - name: AZP_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: vsts-agent-secret
+                key: vstsToken
+         {{- with .Values }}
+          - name: AZP_URL
+            value: {{ .vstsAccount }}
+          - name: AZP_POOL
+            value: {{ .vstsPool | default "kubernetes-vsts-agents" }}
+          - name: AZP_WORK
+            value: {{ .vstsWorkspace | default "/workspace" }}
+         {{- end }}
+         {{- range $key, $value := .Values.extraEnv }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+         {{- end }}
+        volumeMounts:
+          - name: workspace
+            mountPath: {{ .Values.vstsWorkspace | default "/workspace" }}
+{{- if .Values.volumeMounts }}
+{{ toYaml .Values.volumeMounts | indent 10 }}
+{{ end }}
+        resources:
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote }}
+            cpu: {{ .Values.resources.limits.cpu | quote }}
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote }}
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+     {{- if .Values.cleanRun }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "! ls /vsts/agent/_diag | grep Worker || pgrep Agent.Worker"
+          initialDelaySeconds: 120
+          periodSeconds: 5
+     {{- end }}
+      volumes:
+{{ toYaml .Values.volumes | indent 8 }}
+{{ if .Values.image.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.imagePullSecret }}
+{{ end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: workspace
+    spec:
+      accessModes: [ ReadWriteOnce ]
+      storageClassName: {{ .Values.resources.storageclass | default "default" | quote }}
+      resources:
+        requests:
+          storage: {{ .Values.resources.disk | default "50Gi" | quote }}
