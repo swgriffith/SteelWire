@@ -2,6 +2,8 @@
 
 Better README to come later, but in short this repo contains the Dockerfile and Helm chart that can be used to run an Azure DevOps agent in a container, along with a helm chart for deploying to Kubernetes.
 
+The helm chart was based off of the following https://github.com/Azure/helm-vsts-agent
+
 You can build the image with the following:
 ```bash
 docker build -t stevegriffith/vsts-buildagent .  
