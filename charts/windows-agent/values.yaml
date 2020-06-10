@@ -1,0 +1,21 @@
+replicas: 3
+
+image:
+  repository: stevegriffith/vsts-buildagent
+  tag: ltsc2019-v1
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: .25
+    memory: 1Gi
+  requests:
+    cpu: .25
+    memory: 1Gi
+  disk: "5Gi"
+  storageclass: "default"
+
+cleanRun: false
+
+extraEnv: {}
+
